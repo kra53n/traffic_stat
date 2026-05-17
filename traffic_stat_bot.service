@@ -1,0 +1,14 @@
+[Unit]
+Description=Traffic stat bot (https://github.com/kra53n/traffic_stat)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/traffic_stat
+ExecStart=/root/.local/bin/uv run main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

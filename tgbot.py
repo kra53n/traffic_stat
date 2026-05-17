@@ -1,5 +1,6 @@
 import io
 
+from loguru import logger
 from telegram import (
     Update,
     InputMediaPhoto,
@@ -70,6 +71,7 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     # get args, skip command
     args = update.message.text.split()[1:] # type: ignore
+    logger.debug(f"args: {args}")
     if not args:
         return await update.message.reply_text("nicknames should be provided") # type: ignore
     

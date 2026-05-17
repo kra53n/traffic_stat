@@ -1,0 +1,14 @@
+[Unit]
+Description=Traffic stat collection (https://github.com/kra53n/traffic_stat)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/traffic_stat
+ExecStart=/collect
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

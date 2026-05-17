@@ -6,12 +6,10 @@ Show statistic of proxy usage provided by 3x-ui panel in telegram.
 
 ## Usage
 
-> [!NOTE]
-> Makefile now is empty and will be filled when setup would requried on a server one more time.
-> It is encourouged to send PR with patches! 
-
 ```
-make setup
+cd /root
+git clone https://github.com/kra53n/traffic_stat
+./setup.sh
 ```
 
 ## Structure
