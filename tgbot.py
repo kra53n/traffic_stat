@@ -17,12 +17,44 @@ import db
 import plot
 
 
+def run(tg_bot_token: str):
+    app = ApplicationBuilder().token(tg_bot_token).post_init(post_init).build()
+    app.add_handlers(
+        (
+            CommandHandler("start", start),
+            CommandHandler("health", health),
+            CommandHandler("stat", stat),
+            CommandHandler("users", users),
+        )
+    )
+    app.run_polling()
+
+
 async def post_init(app: Application):
     await app.bot.set_my_commands([
+        BotCommand("start", "start message"),
         BotCommand("health", "check bot health"),
         BotCommand("stat", "statistic figures"),
         BotCommand("users", "users list"),
     ])
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Prints start message
+    """
+    message = """Show statistic of proxy usage
+
+    /start - start message i guess
+
+    /health - send message if bot is alive
+
+    /users - send message with proxy users
+
+    /stat - send message with figures
+        /stat user1 - send figures with user1
+        /stat user1 user2 - send figures with user1 and user2"""
+    await update.message.reply_text(message) # type: ignore
 
 
 async def health(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -52,6 +84,18 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for nickname in grouped_statistic_by_nickname_keys:
             if nickname not in args:
                 grouped_statistic_by_nickname.pop(nickname)
+    
+    # send error message if users does not exists
+    if not grouped_statistic_by_nickname:
+        if args[0] == "all":
+            await update.message.reply_text("there is no any statistic collected yet") # type: ignore
+            return
+        if len(args) == 1:
+            message = f"there is no user {args[0]}"
+        else:
+            message = "there is no users: " + ", ".join(args)
+        await update.message.reply_text(message) # type: ignore
+        return
 
     # build figures
     fig1 = io.BytesIO()
@@ -77,15 +121,3 @@ async def users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     statistic_records: list[statistic.Statistic] = statistic.get_list(raw_records)
     grouped_statistic_by_nickname: dict[str, list] = statistic.group_by("nickname", statistic_records)
     await update.message.reply_text("\r\n".join(grouped_statistic_by_nickname.keys())) # type: ignore
-
-
-def run(tg_bot_token: str):
-    app = ApplicationBuilder().token(tg_bot_token).post_init(post_init).build()
-    app.add_handlers(
-        (
-            CommandHandler("health", health),
-            CommandHandler("stat", stat),
-            CommandHandler("users", users),
-        )
-    )
-    app.run_polling()
