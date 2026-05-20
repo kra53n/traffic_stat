@@ -6,6 +6,7 @@ dist/
 wheels/
 *.egg-info
 uv.lock
+.pytest_cache
 
 # Environment files
 .env

@@ -24,24 +24,32 @@ class Statistic:
 
     def __init__(
         self,
-        arg: typing.Sequence[typing.Any],
-        *args,
-        **kwargs,
+        *args: typing.Any,
     ):
-        # TODO check kwargs and parse fields from kwargs
-        # TODO think should we have *args
+        if len(args) < 6:
+            raise StatisticExceptionNotEnoughArgs(args)
+        if len(args) > 6:
+            raise StatisticExceptionTooManyArgs(args)
+        self.id = args[0]
+        self.year = args[1]
+        self.month = args[2]
+        self.day = args[3]
+        self.nickname = args[4]
+        self.alltime = args[5]
 
-        # NOTE we can panic when arg is not a sequnce and when we are go out of range 
-        self.id = arg[0]
-        self.year = arg[1]
-        self.month = arg[2]
-        self.day = arg[3]
-        self.nickname = arg[4]
-        self.alltime = arg[5]
+
+class StatisticExceptionNotEnoughArgs(Exception):
+    def __init__(self, args: typing.Sequence[typing.Any]):
+        super().__init__(f"got {len(args)} args{args}, should be 6 (id, year, month, day, nickname, alltime)")
 
 
-def get_list(iter: typing.Iterable) -> list[Statistic]:
-    return [Statistic(i) for i in iter]
+class StatisticExceptionTooManyArgs(Exception):
+    def __init__(self, args: typing.Sequence[typing.Any]):
+        super().__init__(f"got {len(args)} args{args}, should be 6(id, year, month, day, nickname, alltime)")
+
+
+def get_list(iter: typing.Iterable[typing.Sequence]) -> list[Statistic]:
+    return [Statistic(*i) for i in iter]
 
 
 def group_by(attrname: str, records: typing.Iterable[Statistic]) -> dict[str, list]:
