@@ -121,7 +121,7 @@ def diff_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: str 
         y_label="Gigabytes",
         title="daily",
     )
-    plt.savefig(stored_obj)
+    fig.savefig(stored_obj)
 
 
 
