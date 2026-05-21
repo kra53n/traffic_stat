@@ -38,9 +38,11 @@ def figure(
     x_label: str="",
     y_label: str="",
     figsize: tuple[float, float]=(12, 8),
+    title: str="",
 ) -> Figure:
     fig, ax = plt.subplots(figsize=figsize)
 
+    # iterate over plots (statistic users) and annotate them
     for plot in plots:
         ax.plot(plot.x, plot.y)
         if plot.annotation_way:
@@ -52,6 +54,8 @@ def figure(
     formatter = DateFormatter("%d %b %Y") # %b - Month, %Y - Year (https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
     ax.xaxis.set_major_formatter(formatter)
     ax.tick_params(axis='x', labelrotation=25)
+
+    fig.suptitle(title, fontsize=20)
 
     return fig
 
@@ -90,6 +94,7 @@ def alltime_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: s
         plots=plots,
         x_label="Date",
         y_label="Gigabytes",
+        title="alltime",
     )
     fig.savefig(stored_obj)
 
@@ -114,6 +119,7 @@ def diff_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: str 
         plots=plots,
         x_label="Date",
         y_label="Gigabytes",
+        title="daily",
     )
     plt.savefig(stored_obj)
 
