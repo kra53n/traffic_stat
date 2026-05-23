@@ -18,3 +18,12 @@ Project written in ***`Go`*** and ***`Python`***.
 
 - ***`Go`*** - collects data from 3x-ui panel and write result to `stat.db`
 - ***`Python`*** - run telegram bot and read `stat.db` when bot's users would like to get statistics.
+
+
+## Developing
+
+It is encorouged to develope through TDD.
+
+```
+uv run pytest
+```
