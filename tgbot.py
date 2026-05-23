@@ -1,3 +1,5 @@
+import dataclasses
+import typing
 import io
 
 from loguru import logger
@@ -16,6 +18,24 @@ from telegram.ext import (
 import statistic
 import db
 import plot
+
+
+@dataclasses.dataclass
+class UserStorage:
+    """
+    Dataclass for storing some user telegram stuff for better telegram interaction.
+    """
+    last_stat_args: typing.Optional[list["str"]] = None
+
+
+class Storage(dict):
+    def __getitem__(self, key: int) -> UserStorage:
+        if key not in self:
+            self[key] = UserStorage()
+        return super().__getitem__(key)
+
+
+storage = Storage()
 
 
 def run(tg_bot_token: str):
@@ -78,8 +98,14 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # get args, skip command
     args = update.message.text.split()[1:] # type: ignore
     logger.info(f"args: {args}")
+
+    user_telegram_id = update.message.chat.id # type: ignore
+
+    if not args:
+        args = storage[user_telegram_id].last_stat_args
     if not args:
         return await update.message.reply_text("nicknames should be provided") # type: ignore
+    storage[user_telegram_id].last_stat_args = args
 
     # get data for the plot
     raw_records: list[list] = db.get(db_src=db.src(), table_name="stat")
@@ -92,7 +118,7 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for nickname in grouped_statistic_by_nickname_keys:
             if nickname not in args:
                 grouped_statistic_by_nickname.pop(nickname)
-    
+        
     # send error message if users does not exists
     if not grouped_statistic_by_nickname:
         if args[0] == "all":
@@ -104,6 +130,8 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message = "there is no users: " + ", ".join(args)
         await update.message.reply_text(message) # type: ignore
         return
+    
+    storage[user_telegram_id].last_stat_args = args
 
     # build figures
     fig1 = io.BytesIO()
