@@ -1,7 +1,7 @@
 [project]
 name = "plot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Show statistic of proxy usage provided by 3x-ui panel in telegram."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
