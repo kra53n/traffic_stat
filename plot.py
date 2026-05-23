@@ -2,6 +2,7 @@ import typing
 import io
 import datetime
 
+from loguru import logger
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.dates import DateFormatter
@@ -75,6 +76,8 @@ def annotate_as_date(
 
 
 def alltime_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: str | io.BytesIO):
+    logger.trace(f"nicknames: {grouped_statistic_by_nickname.keys()}")
+
     # build the plot
     plots = []
     for group in grouped_statistic_by_nickname:
@@ -98,8 +101,12 @@ def alltime_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: s
     )
     fig.savefig(stored_obj)
 
+    logger.trace("end")
+
 
 def diff_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: str | io.BytesIO):
+    logger.trace(f"nicknames: {grouped_statistic_by_nickname.keys()}")
+
     # build the plot
     plots = []
     for group in grouped_statistic_by_nickname:
@@ -123,6 +130,7 @@ def diff_figure(grouped_statistic_by_nickname: dict[str, list], stored_obj: str 
     )
     fig.savefig(stored_obj)
 
+    logger.trace("end")
 
 
 if __name__ == '__main__':

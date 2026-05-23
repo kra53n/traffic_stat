@@ -23,5 +23,6 @@ uv.lock
 *.svg
 *.ppm
 
-# Data files
+# Data files/directories
 *.db
+logs/

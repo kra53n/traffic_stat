@@ -1,10 +1,13 @@
 import os
 import typing
 
+
+from loguru import logger
 import sqlite3
 
 
 def get(db_src: str, table_name: str) -> list[list[typing.Any]]:
+    logger.trace(f"db_src: {db_src}, table_name: {table_name}")
     con = sqlite3.connect(db_src)
     cur = con.cursor()
     cur.execute(f"SELECT * FROM {table_name}")
@@ -20,8 +23,8 @@ def src() -> str:
     load_env() before calling src.
     """
     src: typing.Optional[str] = os.getenv("DB_SRC")
+    logger.trace(f"src: {src}")
     if not src:
-        # TODO add logging here
         return ""
     return src
 

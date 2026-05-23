@@ -19,6 +19,7 @@ import plot
 
 
 def run(tg_bot_token: str):
+    logger.info("run telegram bot")
     app = ApplicationBuilder().token(tg_bot_token).post_init(post_init).build()
     app.add_handlers(
         (
@@ -32,6 +33,7 @@ def run(tg_bot_token: str):
 
 
 async def post_init(app: Application):
+    logger.trace("add command commands")
     await app.bot.set_my_commands([
         BotCommand("start", "start message"),
         BotCommand("health", "check bot health"),
@@ -55,6 +57,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /stat - send message with figures
         /stat user1 - send figures with user1
         /stat user1 user2 - send figures with user1 and user2"""
+    logger.info("start command called")
     await update.message.reply_text(message) # type: ignore
 
 
@@ -62,6 +65,7 @@ async def health(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Check bot health
     """
+    logger.info("health called")
     await update.message.reply_text(f"Bot is alive, {update.effective_user.first_name}") # type: ignore
 
 
@@ -69,12 +73,14 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Give user the statistic
     """
+    logger.info("stat command called")
+
     # get args, skip command
     args = update.message.text.split()[1:] # type: ignore
-    logger.debug(f"args: {args}")
+    logger.info(f"args: {args}")
     if not args:
         return await update.message.reply_text("nicknames should be provided") # type: ignore
-    
+
     # get data for the plot
     raw_records: list[list] = db.get(db_src=db.src(), table_name="stat")
     statistic_records: list[statistic.Statistic] = statistic.get_list(raw_records)
@@ -119,6 +125,7 @@ async def users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Return users list
     """
+    logger.info("users command called")
     raw_records = db.get(db_src=db.src(), table_name="stat")
     statistic_records: list[statistic.Statistic] = statistic.get_list(raw_records)
     grouped_statistic_by_nickname: dict[str, list] = statistic.group_by("nickname", statistic_records)
