@@ -13,9 +13,9 @@ def test_storage():
     storage = tgbot.Storage()
     assert storage[user_telegram_id] == tgbot.UserStorage()
 
-    storage[user_telegram_id].last_stat_args = args1
-    assert storage[user_telegram_id].last_stat_args == args1
-    assert storage[user_telegram_id].last_stat_args == args2
+    storage[user_telegram_id].last_input_nicknames = args1
+    assert storage[user_telegram_id].last_input_nicknames == args1
+    assert storage[user_telegram_id].last_input_nicknames == args2
 
-    storage[user_telegram_id].last_stat_args = args3
-    assert storage[user_telegram_id].last_stat_args == args3
+    storage[user_telegram_id].last_input_nicknames = args3
+    assert storage[user_telegram_id].last_input_nicknames == args3
