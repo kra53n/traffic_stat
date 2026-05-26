@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 import typing
 import io
 
@@ -38,6 +39,37 @@ class Storage(dict):
 
 
 storage = Storage()
+
+
+format_bytes_table = (
+    "bytes",
+    "KiB", # kibibyte
+    "MiB", # mebibyte
+    "GiB", # gibibyte
+    "TiB", # tebibyte
+    "PiB", # pebibyte
+    "EiB", # exbibyte
+    "ZiB", # zebibyte
+    "YiB", # yobibyte
+    "RiB", # robibyte
+    "QiB", # quebibyte
+)
+
+
+def format_bytes(bytes: int) -> str:
+    cnt = 0
+    while True:
+        tmp = bytes >> 10 # shift to right by 1024
+        if tmp == 0:
+            return f"{bytes} {format_bytes_table[cnt]}"
+        bytes = tmp
+        cnt += 1
+
+
+def format_statistic_for_summary(statistic: statistic.Statistic, bytes: typing.Optional[int] = None) -> str:
+    if not bytes:
+        bytes = statistic.alltime
+    return f"{datetime.date(statistic.year, statistic.month, statistic.day).strftime('%d %b')} {format_bytes(bytes):>8}"
 
 
 async def get_grouped_statistic_by_nicknames(message: Message) -> dict[str, list[typing.Any]]:
@@ -187,21 +219,21 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     grouped_statistc_by_nicknames = await get_grouped_statistic_by_nicknames(update.message)
+
     message = ""
     for nickname, statistic in grouped_statistc_by_nicknames.items():
-        message += "  " + nickname + "\r\n"
+        message += f"class {nickname}:\r\n"
         statistic = statistic[-6:]
         match len(statistic):
             case 0:
                 message += "no statistic"
             case 1:
-                message += "    " + f"{statistic[0].day} {statistic[0].month} " + statistic[0].alltime + " GiB"
+                message += "    " + format_statistic_for_summary(statistic[0])
             case _:
-                message += "\r\n".join(("    " + f"{statistic[i].day} {statistic[i].month} " + str((statistic[i].alltime - statistic[i-1].alltime) / 1024 / 1024 / 1024) + " GiB" for i in range(1, len(statistic))))
-                print(message)
-        message += "\r\n"
+                message += "\r\n".join(("    " + format_statistic_for_summary(statistic[i], statistic[i].alltime - statistic[i-1].alltime) for i in range(1, len(statistic))))
+        message += "\r\n\r\n\r\n"
 
-    await update.message.reply_text(message)
+    await update.message.reply_text(f"```python\r\n{message}```", parse_mode="Markdown")
 
 
 async def users(update: Update, context: ContextTypes.DEFAULT_TYPE):
