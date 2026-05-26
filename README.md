@@ -12,6 +12,12 @@ git clone https://github.com/kra53n/traffic_stat
 ./setup.sh
 ```
 
+### Requirements
+
+- server 🤔
+- systemd 🙈
+- 3x-ui panel 🫨
+
 ## Structure
 
 Project written in ***`Go`*** and ***`Python`***.
@@ -26,4 +32,10 @@ It is encorouged to develope through TDD.
 
 ```
 uv run pytest
+```
+
+Run application.
+
+```
+uv run main.py
 ```
