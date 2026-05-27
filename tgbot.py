@@ -29,6 +29,7 @@ class UserStorage:
     Dataclass for storing some user telegram stuff for better telegram interaction.
     """
     last_input_nicknames: typing.Optional[list[str]] = None
+    period: typing.Optional[int] = None # in days
 
 
 class Storage(dict):
@@ -190,10 +191,23 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error("no message")
         return
 
+    if not update.message.from_user:
+        logger.error("no user")
+        return
+
     try:
         grouped_statistc_by_nicknames = await get_grouped_statistic_by_nicknames(update.message)
     except Exception as e:
         return await update.message.reply_text(", ".join(e.args))
+
+    user_storage = storage[update.message.from_user.id]
+    period = user_storage.period
+    if not period:
+        period = 30 # set 30 days by default
+
+    # accept period to grouped_statistic_by_nicknames
+    for nickname, statistic_list in grouped_statistc_by_nicknames.items():
+        grouped_statistc_by_nicknames[nickname] = statistic_list[-period:]
 
     # build figures
     fig1 = io.BytesIO()
