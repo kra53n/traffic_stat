@@ -28,7 +28,10 @@ class UserStorage:
     """
     Dataclass for storing some user telegram stuff for better telegram interaction.
     """
-    last_input_nicknames: typing.Optional[list["str"]] = None
+    last_input_nicknames: typing.Optional[list[str]] = None
+
+
+s = UserStorage()
 
 
 class Storage(dict):
@@ -40,6 +43,23 @@ class Storage(dict):
 
 storage = Storage()
 
+
+@dataclasses.dataclass
+class SettingRule:
+    short_way: typing.Optional[typing.Callable[[UserStorage, list[str]], typing.Optional[str]]] = None
+    long_way: typing.Optional[typing.Callable[[UserStorage, list[str]], typing.Optional[str]]] = None
+
+
+def stat_short_setting_rule(us: UserStorage, vals: list[str]):
+    us.last_input_nicknames = vals
+
+
+settings_rules: dict[str, SettingRule] = {
+    "stat": SettingRule(
+        short_way = stat_short_setting_rule,
+    ),
+}
+    
 
 format_bytes_table = (
     "bytes",
@@ -114,8 +134,7 @@ async def get_grouped_statistic_by_nicknames(message: Message) -> dict[str, list
             err_msg = f"there is no user {nicknames[0]}"
         else:
             err_msg = "there is no users: " + ", ".join(nicknames)
-        await message.reply_text(err_msg)
-        return {}
+        raise Exception(err_msg)
     
     storage[user.id].last_input_nicknames = nicknames
 
@@ -133,6 +152,7 @@ def run(tg_bot_token: str):
             CommandHandler("stat", stat),
             CommandHandler("users", users),
             CommandHandler("summary", summary),
+            CommandHandler("settings", settings),
         )
     )
     app.run_polling()
@@ -146,6 +166,7 @@ async def post_init(app: Application):
         BotCommand("stat", "statistic figures"),
         BotCommand("summary", "users summary"),
         BotCommand("users", "users list"),
+        BotCommand("settings", "change command behaviours"),
     ])
 
 
@@ -190,7 +211,10 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error("no message")
         return
 
-    grouped_statistc_by_nicknames = await get_grouped_statistic_by_nicknames(update.message)
+    try:
+        grouped_statistc_by_nicknames = await get_grouped_statistic_by_nicknames(update.message)
+    except Exception as e:
+        return await update.message.reply_text(", ".join(e.args))
 
     # build figures
     fig1 = io.BytesIO()
@@ -218,7 +242,10 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error("no message")
         return
 
-    grouped_statistc_by_nicknames = await get_grouped_statistic_by_nicknames(update.message)
+    try:
+        grouped_statistc_by_nicknames = await get_grouped_statistic_by_nicknames(update.message)
+    except Exception as e:
+        return await update.message.reply_text(", ".join(e.args))
 
     message = ""
     for nickname, statistic in grouped_statistc_by_nicknames.items():
@@ -245,3 +272,77 @@ async def users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     statistic_records: list[statistic.Statistic] = statistic.get_list(raw_records)
     grouped_statistic_by_nickname: dict[str, list] = statistic.group_by("nickname", statistic_records)
     await update.message.reply_text("\r\n".join(grouped_statistic_by_nickname.keys())) # type: ignore
+
+
+
+async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    The configuration of other commands results.
+
+    Rule of parsing a command:
+    - long way
+        /settings command field value
+    - short way
+        /settings command value,
+
+    It is possible to have 2 ways for 1 command and if it is, short way set by command context.
+    """
+    logger.info("settings command called")
+
+    if not update.message:
+        logger.error("no message")
+        return
+
+    if not update.message.from_user:
+        raise Exception("no user provided to the message")
+    
+    if not update.message.text:
+        raise Exception("was given a message without text")
+
+    # skip `/settings`
+    tokens = update.message.text.split()[1:]
+
+    if not tokens:
+        return update.message.reply_text("""The configuration of other commands results.
+
+    Rule of parsing a command:
+    - long way
+        /settings command field value
+    - short way
+        /settings command value,
+
+    It is possible to have 2 ways for 1 command and if it is, short way set by command context""")
+
+    # validate given words sequence
+    command = tokens[0]
+    setting_rule = settings_rules[command]
+    if not command:
+        return await update.message.reply_text(f"🚨 there is no command /{command}")
+    if len(tokens) == 1:
+        return await update.message.reply_text(f"🚨 fields and values was not provided")
+    if len(tokens) == 2 and not setting_rule.short_way:
+        return await update.message.reply_text(f"🚨 command /{command} does not have short way")
+    if len(tokens) % 2 == 1:
+        return await update.message.reply_text("🚨 wrong numbers of fields and values")
+
+    # skip command
+    args = tokens[1:] 
+
+    # execute command
+    exec_command = setting_rule.short_way if len(args) == 1 else setting_rule.long_way
+
+    if not exec_command:
+        if len(args) == 1:
+            return await update.message.reply_text("🚨 there is short setting option for command /{command}")
+        else:
+            return await update.message.reply_text("🚨 there is long setting option for command /{command}")
+
+    try:
+        result = exec_command(storage[update.message.from_user.id], args)
+        if not result:
+            result = "command succeeded"
+    except Exception as e:
+        result = f"🚨 {', '.join(e.args)}"
+
+    await update.message.reply_text(result)
+
