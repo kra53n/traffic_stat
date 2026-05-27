@@ -31,9 +31,6 @@ class UserStorage:
     last_input_nicknames: typing.Optional[list[str]] = None
 
 
-s = UserStorage()
-
-
 class Storage(dict):
     def __getitem__(self, key: int) -> UserStorage:
         if key not in self:
@@ -59,6 +56,13 @@ settings_rules: dict[str, SettingRule] = {
         short_way = stat_short_setting_rule,
     ),
 }
+
+
+@dataclasses.dataclass
+class Command:
+    name: str
+    description: str
+    callable: typing.Any = None
     
 
 format_bytes_table = (
@@ -139,35 +143,6 @@ async def get_grouped_statistic_by_nicknames(message: Message) -> dict[str, list
     storage[user.id].last_input_nicknames = nicknames
 
     return grouped_statistic_by_nicknames
-
-
-
-def run(tg_bot_token: str):
-    logger.info("run telegram bot")
-    app = ApplicationBuilder().token(tg_bot_token).post_init(post_init).build()
-    app.add_handlers(
-        (
-            CommandHandler("start", start),
-            CommandHandler("health", health),
-            CommandHandler("stat", stat),
-            CommandHandler("users", users),
-            CommandHandler("summary", summary),
-            CommandHandler("settings", settings),
-        )
-    )
-    app.run_polling()
-
-
-async def post_init(app: Application):
-    logger.trace("add command commands")
-    await app.bot.set_my_commands([
-        BotCommand("start", "start message"),
-        BotCommand("health", "check bot health"),
-        BotCommand("stat", "statistic figures"),
-        BotCommand("summary", "users summary"),
-        BotCommand("users", "users list"),
-        BotCommand("settings", "change command behaviours"),
-    ])
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -346,3 +321,24 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(result)
 
+
+commands = (
+        Command(name="start", description="start message", callable=start),
+        Command(name="health", description="check bot health", callable=health),
+        Command(name="stat", description="statistic figures", callable=stat),
+        Command(name="summary", description="users summary", callable=summary),
+        Command(name="users", description="users list", callable=users),
+        Command(name="settings", description="change command behaviours", callable=settings),
+)
+
+
+async def post_init(app: Application):
+    logger.trace("add command commands")
+    await app.bot.set_my_commands((BotCommand(command.name, command.description) for command in commands))
+
+
+def run(tg_bot_token: str):
+    logger.info("run telegram bot")
+    app = ApplicationBuilder().token(tg_bot_token).post_init(post_init).build()
+    app.add_handlers(tuple(CommandHandler(command.name, command.callable) for command in commands))
+    app.run_polling()
