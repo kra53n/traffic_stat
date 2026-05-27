@@ -163,7 +163,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         /summary user1 - send summary with user1
         /summary user1 user2 - send summary with user1 and user2
 
-    /users - send message with proxy users"""
+    /users - send message with proxy users
+    
+    /settings - change command behaviours
+        /settings command value
+        /settings command field value"""
     logger.info("start command called")
     await update.message.reply_text(message) # type: ignore
 
@@ -255,10 +259,10 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     The configuration of other commands results.
 
     Rule of parsing a command:
+    - short way
+        /settings command value
     - long way
         /settings command field value
-    - short way
-        /settings command value,
 
     It is possible to have 2 ways for 1 command and if it is, short way set by command context.
     """
@@ -281,10 +285,10 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return update.message.reply_text("""The configuration of other commands results.
 
     Rule of parsing a command:
+    - short way
+        /settings command value
     - long way
         /settings command field value
-    - short way
-        /settings command value,
 
     It is possible to have 2 ways for 1 command and if it is, short way set by command context""")
 
