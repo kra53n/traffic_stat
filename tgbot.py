@@ -29,7 +29,7 @@ class UserStorage:
     Dataclass for storing some user telegram stuff for better telegram interaction.
     """
     last_input_nicknames: typing.Optional[list[str]] = None
-    period: typing.Optional[int] = None # in days
+    period: typing.Optional[str] = None # in days
 
 
 class Storage(dict):
@@ -40,23 +40,6 @@ class Storage(dict):
 
 
 storage = Storage()
-
-
-@dataclasses.dataclass
-class SettingRule:
-    short_way: typing.Optional[typing.Callable[[UserStorage, list[str]], typing.Optional[str]]] = None
-    long_way: typing.Optional[typing.Callable[[UserStorage, list[str]], typing.Optional[str]]] = None
-
-
-def stat_short_setting_rule(us: UserStorage, vals: list[str]):
-    us.last_input_nicknames = vals
-
-
-settings_rules: dict[str, SettingRule] = {
-    "stat": SettingRule(
-        short_way = stat_short_setting_rule,
-    ),
-}
 
 
 @dataclasses.dataclass
@@ -167,8 +150,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     /users - send message with proxy users
     
     /settings - change command behaviours
-        /settings command value
-        /settings command field value"""
+        /settings field value
+        /settings field value1,value2,..."""
     logger.info("start command called")
     await update.message.reply_text(message) # type: ignore
 
@@ -204,6 +187,8 @@ async def stat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     period = user_storage.period
     if not period:
         period = 30 # set 30 days by default
+    else:
+        period = int(period)
 
     # accept period to grouped_statistic_by_nicknames
     for nickname, statistic_list in grouped_statistc_by_nicknames.items():
@@ -271,14 +256,6 @@ async def users(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     The configuration of other commands results.
-
-    Rule of parsing a command:
-    - short way
-        /settings command value
-    - long way
-        /settings command field value
-
-    It is possible to have 2 ways for 1 command and if it is, short way set by command context.
     """
     logger.info("settings command called")
 
@@ -293,51 +270,24 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
         raise Exception("was given a message without text")
 
     # skip `/settings`
-    tokens = update.message.text.split()[1:]
+    args = update.message.text.split()[1:]
 
-    if not tokens:
-        return update.message.reply_text("""The configuration of other commands results.
+    if not args:
+        return await update.message.reply_text("The configuration of other commands results.")
 
-    Rule of parsing a command:
-    - short way
-        /settings command value
-    - long way
-        /settings command field value
+    if len(args) > 2:
+            return await update.message.reply_text(f"🚨 /settings can accept only `field` or `field value`, given {args}")
 
-    It is possible to have 2 ways for 1 command and if it is, short way set by command context""")
+    user_storage = storage[update.message.from_user.id]
 
-    # validate given words sequence
-    command = tokens[0]
-    setting_rule = settings_rules[command]
-    if not command:
-        return await update.message.reply_text(f"🚨 there is no command /{command}")
-    if len(tokens) == 1:
-        return await update.message.reply_text(f"🚨 fields and values was not provided")
-    if len(tokens) == 2 and not setting_rule.short_way:
-        return await update.message.reply_text(f"🚨 command /{command} does not have short way")
-    if len(tokens) % 2 == 1:
-        return await update.message.reply_text("🚨 wrong numbers of fields and values")
+    field, val = args
+    match field:
+        case "nicknames":
+            user_storage.last_input_nicknames = [i.strip() for i in val.split(",")]
+        case "period":
+            user_storage.period = val
 
-    # skip command
-    args = tokens[1:] 
-
-    # execute command
-    exec_command = setting_rule.short_way if len(args) == 1 else setting_rule.long_way
-
-    if not exec_command:
-        if len(args) == 1:
-            return await update.message.reply_text("🚨 there is short setting option for command /{command}")
-        else:
-            return await update.message.reply_text("🚨 there is long setting option for command /{command}")
-
-    try:
-        result = exec_command(storage[update.message.from_user.id], args)
-        if not result:
-            result = "command succeeded"
-    except Exception as e:
-        result = f"🚨 {', '.join(e.args)}"
-
-    await update.message.reply_text(result)
+    return await update.message.reply_text(f"{field}={val or 'default'}")
 
 
 commands = (
