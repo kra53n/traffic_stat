@@ -32,7 +32,7 @@ cp traffic_stat_collect.service /etc/systemd/system/traffic_stat_collect.service
 
 # start the service
 systemctl daemon-reload
-systemctl enable traffic_stat_bot
-systemctl start traffic_stat_bot
 systemctl enable traffic_stat_collect
 systemctl start traffic_stat_collect
+systemctl enable traffic_stat_bot
+systemctl start traffic_stat_bot
